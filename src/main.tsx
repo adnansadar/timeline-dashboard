@@ -11,6 +11,8 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 
 import App from "./App";
+import { ApiError } from "./api/client";
+import { AuthProvider } from "./hooks/AuthProvider";
 import { theme } from "./theme";
 import "./index.css";
 
@@ -22,7 +24,9 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       staleTime: 60_000,
-      retry: 2,
+      retry: (failureCount, error) =>
+        error instanceof ApiError && error.isRetryable && failureCount < 2,
+      retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 8_000),
     },
   },
 });
@@ -34,7 +38,9 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <BrowserRouter>
-            <App />
+            <AuthProvider>
+              <App />
+            </AuthProvider>
           </BrowserRouter>
         </ThemeProvider>
       </LocalizationProvider>
