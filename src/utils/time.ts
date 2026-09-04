@@ -58,3 +58,7 @@ export function toIst(utcTimestamp: string): Dayjs {
 export function formatIstTime(utcTimestamp: string): string {
   return toIst(utcTimestamp).format("HH:mm");
 }
+
+export function istLabelFromMillis(ms: number): string {
+  return dayjs(ms).tz(IST_TZ).format("HH:mm");
+}
