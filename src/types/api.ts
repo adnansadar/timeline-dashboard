@@ -106,14 +106,16 @@ export interface ProduceCountBucket {
   ng_count: number;
 }
 
-export type ProduceResult = "PASS" | "FAIL";
+export type ProduceResult = "PASS" | "FAIL" | "WIP";
+
+export type ProduceType = "FIRST" | "WIP";
 
 export interface ProduceRow {
   produce_id: string;
   /** NOT sorted within a bucket — sort before use. */
   first_seen_ts: string;
   result: ProduceResult;
-  produce_type: string;
+  produce_type: ProduceType;
   part_model_id: string;
 }
 
