@@ -9,6 +9,7 @@ import Stack from "@mui/material/Stack";
 import AppHeader from "../components/AppHeader";
 import FilterBar from "../components/FilterBar";
 import HourlyTable from "../components/HourlyTable";
+import TimelineChart from "../components/TimelineChart";
 import {
   useAssetTree,
   useShifts,
@@ -152,7 +153,18 @@ export default function DashboardPage() {
             </Alert>
           ) : null}
 
-          {shiftWindow ? <HourlyTable columns={hourColumns} /> : null}
+          {shiftWindow ? (
+            <>
+              <TimelineChart
+                key={shiftWindow.range.from_ts}
+                window={shiftWindow}
+                columns={hourColumns}
+                intervals={intervals.data}
+                showIndividualProduces={filters.showIndividualProduces}
+              />
+              <HourlyTable columns={hourColumns} />
+            </>
+          ) : null}
         </Stack>
       </Container>
     </Box>

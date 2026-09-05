@@ -42,6 +42,7 @@ export const DOWNTIME_TYPE_UNKNOWN = "unknown";
 export const PRODUCE_COLORS = {
   PASS: "#2E4FD8",
   FAIL: "#D32F2F",
+  WIP: "#90A4AE",
 } as const;
 
 export const MIN_ZOOM_SPAN_MS = 60_000;
