@@ -211,7 +211,7 @@ export default function TimelineChart({
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Production History
         </Typography>
-        <Legend showIndividualProduces={showIndividualProduces} />
+        <Legend />
       </Stack>
 
       <Box
@@ -249,6 +249,18 @@ export default function TimelineChart({
           variant="outlined"
           label="Shift + drag to zoom into a time range · double-click to reset"
         />
+        <Chip
+          size="small"
+          variant="outlined"
+          label="Colored line = cumulative production (OK + NG)"
+        />
+        {showIndividualProduces ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="Circles = FIRST (PASS) · Crosses = FAIL · Triangles = WIP"
+          />
+        ) : null}
         {zoom ? (
           <Chip size="small" color="primary" label="Zoomed" onDelete={resetView} />
         ) : null}
@@ -340,6 +352,25 @@ function drawBands(
   ctx.restore();
 }
 
+/** Grid ticks, plus the window edges, dropping any grid tick that would collide. */
+function axisTicks(
+  view: [number, number],
+  xFor: (time: number) => number,
+  minGapPx = 44,
+): number[] {
+  const [start, end] = view;
+  const startX = xFor(start);
+  const endX = xFor(end);
+
+  const inner = timeTicks(start, end).filter((tick) => {
+    if (tick <= start || tick >= end) return false;
+    const x = xFor(tick);
+    return Math.abs(x - startX) >= minGapPx && Math.abs(x - endX) >= minGapPx;
+  });
+
+  return [start, ...inner, end];
+}
+
 function drawAxes(
   ctx: CanvasRenderingContext2D,
   view: [number, number],
@@ -360,16 +391,19 @@ function drawAxes(
     ctx.fillText(String(value), PADDING.left - 8, yFor(value));
   }
 
-  ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
-  for (const tick of timeTicks(view[0], view[1])) {
+  const left = PADDING.left;
+  const right = PADDING.left + plotWidth;
+  for (const tick of axisTicks(view, xFor)) {
     const x = xFor(tick);
-    if (x < PADDING.left || x > PADDING.left + plotWidth) continue;
+    if (x < left - 0.5 || x > right + 0.5) continue;
     ctx.beginPath();
     ctx.moveTo(x, PADDING.top + plotHeight);
     ctx.lineTo(x, PADDING.top + plotHeight + 4);
     ctx.stroke();
+    // Keep the two edge labels inside the plot instead of half-clipped.
+    ctx.textAlign = x - left < 16 ? "left" : right - x < 16 ? "right" : "center";
     ctx.fillText(istLabelFromMillis(tick), x, PADDING.top + plotHeight + 7);
   }
 
@@ -504,11 +538,7 @@ function MarkerTooltip({ hover, width }: { hover: Hover; width: number }) {
   );
 }
 
-function Legend({
-  showIndividualProduces,
-}: {
-  showIndividualProduces: boolean;
-}) {
+function Legend() {
   return (
     <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
       {SEGMENT_KINDS.map((kind) => (
@@ -524,11 +554,6 @@ function Legend({
           <Typography variant="caption">{SEGMENT_LABELS[kind]}</Typography>
         </Stack>
       ))}
-      {showIndividualProduces ? (
-        <Typography variant="caption" color="text.secondary">
-          ● PASS · ✕ FAIL · ▲ WIP
-        </Typography>
-      ) : null}
     </Stack>
   );
 }

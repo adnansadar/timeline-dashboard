@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
@@ -10,11 +8,13 @@ import AppHeader from "../components/AppHeader";
 import FilterBar from "../components/FilterBar";
 import HourlyTable from "../components/HourlyTable";
 import TimelineChart from "../components/TimelineChart";
+import { EmptyBanner, ErrorAlert } from "../components/StateViews";
 import {
   useAssetTree,
   useShifts,
   useTimelineData,
 } from "../hooks/useDashboardData";
+import { ApiError } from "../api/client";
 import type { EntityScope } from "../types/api";
 import type { DashboardFilters } from "../types/filters";
 import { assetLevelIds, flattenAssets } from "../utils/assets";
@@ -120,6 +120,16 @@ export default function DashboardPage() {
     [shiftWindow, intervals.data, cycleTime.data],
   );
 
+  const hasSegments =
+    (intervals.data?.runtimes.length ?? 0) +
+      (intervals.data?.downtimes.length ?? 0) +
+      (intervals.data?.stoppages.length ?? 0) >
+    0;
+  const isEmpty =
+    intervals.isSuccess &&
+    !hasSegments &&
+    (intervals.data?.produce_counts.length ?? 0) === 0;
+
   const isFetching = intervals.isFetching || cycleTime.isFetching;
   const error = intervals.error ?? cycleTime.error;
 
@@ -140,18 +150,11 @@ export default function DashboardPage() {
             isFetching={isFetching}
           />
 
-          {error ? (
-            <Alert
-              severity="error"
-              action={
-                <Button color="inherit" size="small" onClick={refetch}>
-                  Retry
-                </Button>
-              }
-            >
-              {error.message}
-            </Alert>
+          {error instanceof ApiError ? (
+            <ErrorAlert error={error} onRetry={refetch} />
           ) : null}
+
+          {isEmpty ? <EmptyBanner hasSegments={hasSegments} /> : null}
 
           {shiftWindow ? (
             <>
